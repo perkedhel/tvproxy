@@ -1,45 +1,19 @@
-name: sync-rp
-
+name: sync-hf
 on:
-  schedule:
-    - cron: '0 */24 * * *'
-  workflow_dispatch:
-
+  push: {}
 jobs:
-  sync:
-    runs-on: ubuntu-latest
-    env:
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+  autoupdate:
+    name: autoupdate
+    runs-on: ubuntu-18.04
     steps:
-      - name: Checkout your repo with full history
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - uses: docker://chinthakagodawita/autoupdate-action:v1
+        id: autoupdate
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          MERGE_CONFLICT_ACTION: "ignore"
 
-      - name: Add upstream remote
-        run: git remote add upstream https://github.com/nzo66/tvproxy.git
+      - run: echo 'Merge conflicts found!'
+        if: ${{ steps.autoupdate.outputs.conflicted }}
 
-      - name: Fetch upstream main branch
-        run: git fetch upstream main
-
-      - name: Preserve your workflows
-        run: |
-          mv .github/workflows ../workflows_backup
-
-      - name: Checkout upstream files
-        run: git checkout upstream/main -- .
-
-      - name: Restore your workflows
-        run: |
-          rm -rf .github/workflows
-          mv ../workflows_backup .github/workflows
-
-      - name: Commit and push changes
-        run: |
-          git config --global user.name "actions-user"
-          git config --global user.email "action@github.com"
-          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git
-          git add .
-          git commit -m "Synchronize Success"
-          git push origin main
+      - run: echo 'No merge conflicts'
+        if: ${{ !steps.autoupdate.outputs.conflicted }}
