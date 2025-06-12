@@ -2,7 +2,7 @@ name: sync-rp
 
 on:
   schedule:
-    - cron: '0 */24 * * *'
+    - cron: '59 23 * * *'
   workflow_dispatch:
 
 jobs:
